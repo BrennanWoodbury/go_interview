@@ -23,22 +23,22 @@ func main() {
 	}
 	lines := strings.Split(string(data), "\n")
 	for _, line := range lines {
-		go func() {
-			data, err := getData(line)
-			if err != nil {
-				log.Printf("unable to get status: %v", err)
-			}
-			if data.(string) == "foo" {
-				fmt.Printf("data found: %s", data)
-				os.Exit(0)
-			}
-		}()
+		data, err := getData(line)
+		if err != nil {
+			log.Printf("unable to get status: %v", err)
+		}
+		if data.(string) == "foo" {
+			fmt.Printf("data found: %s", data)
+			os.Exit(0)
+		}
 	}
 }
 
 func getData(line string) (any, error) {
 	var location struct{ URL string }
-	if err := json.Unmarshal([]byte(line), &location); err != nil {
+	err := json.Unmarshal([]byte(line), &location)
+	if err != nil {
+		return nil, err
 	}
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, location.URL, nil)
 	if err != nil {
@@ -46,10 +46,13 @@ func getData(line string) (any, error) {
 	}
 	c := &http.Client{}
 	res, err := c.Do(req)
+	fmt.Println(res)
 	if err != nil {
 		return nil, err
 	}
-	if _, err := io.Copy(buf, res.Body); err != nil {
+	data, err := io.Copy(buf, res.Body)
+	fmt.Println(data)
+	if err != nil {
 		return nil, err
 	}
 	var payload struct {
